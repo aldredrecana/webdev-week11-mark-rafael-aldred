@@ -22,9 +22,9 @@ version sends \_\*\* queries because `with('venue')` loads all venues together a
 | Q1 arrow-form JSONB filter  | none                             | Seq Scan                  | 7.833 ms       |
 | Q2 containment JSONB filter | none                             | Seq Scan                  | 9.235 ms       |
 | Q3 full-text search         | none                             | Seq Scan                  | 191.022 ms     |
-| Q1 arrow-form JSONB filter  | events_dress_code_idx (btree)    | Bitmap Index Sca          | 0.331 ms       |
+| Q1 arrow-form JSONB filter  | events_dress_code_idx (btree)    | Bitmap Index Scan         | 0.331 ms       |
 | Q2 containment JSONB filter | events_details_gin_idx (GIN)     | Bitmap Index Scan         | 0.199 ms       |
-| Q3 full-text search         | events_description_fts_idx (GIN) | Bitmap Index Scan         | 0.193 m        |
+| Q3 full-text search         | events_description_fts_idx (GIN) | Bitmap Index Scan         | 0.193 ms       |
 | Q2 containment JSONB filter | only events_dress_code_idx       | Seq Scan (index not used) | 9.001 ms       |
 
 **Why the last row does not use the index:** The btree index is built on
@@ -42,7 +42,7 @@ expression like `details->>'dress_code'`, and it cannot choose the
 ## 4. Step 9: Choosing columns wisely
 
 - **Kept in the JSONB column `details`:** `dress_code` (also `capacity`, `tags`).
-  Reason: JSONB (dress_code): Not every event needs it, and the extra details can differ per event.
+  Reason: Not every event needs it, and the extra details can differ per event.
 - **Kept in a normal column:** `starts_at` (or `venue_id`).
   Reason: Normal column (starts_at): Every event has it, and we sort and filter by it all the time.
 
@@ -63,5 +63,3 @@ This week we learned that the N+1 problem happens when a loop sends one extra qu
 We also learned that an index only helps when the query matches the index and the value is rare: “telescope” and “barong” appear in less than 1% of our 20,000 events, so PostgreSQL can jump straight to them instead of reading every row.
 Using EXPLAIN (ANALYZE) showed us what PostgreSQL really did, such as switching from a Seq Scan to an index scan, so we measured instead of guessing.
 One thing we found confusing is why a GIN index is needed for the containment filter (@>) while a btree index works for the arrow filter (->>), and we want to explore how PostgreSQL chooses between them.
-
-(see below)
