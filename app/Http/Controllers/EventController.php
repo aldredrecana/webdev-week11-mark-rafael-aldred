@@ -63,4 +63,26 @@ class EventController extends Controller
         'containEvents'   => $containQuery->get(),
     ]);
 }
+
+public function search(Request $request)
+{
+    $q = trim($request->query('q', ''));
+    $venue = $request->query('venue');   // optional, lets us chain scopes
+
+    $events = collect();
+    $sql = null;
+
+    if ($q !== '') {
+        $query = Event::search($q)                                     // scope 1: full-text
+            ->when($venue, fn ($qb) => $qb->atVenue((int) $venue))     // scope 2: chained
+            ->with('venue')
+            ->orderBy('id')
+            ->limit(50);
+
+        $sql = $query->toSql();
+        $events = $query->get();
+    }
+
+    return view('events.search', compact('q', 'events', 'sql'));
+}
 }
