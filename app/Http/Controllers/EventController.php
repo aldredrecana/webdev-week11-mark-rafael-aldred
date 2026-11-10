@@ -36,4 +36,31 @@ class EventController extends Controller
 
         return view('events.index', compact('rows', 'mode', 'queryCount'));
     }
+
+    public function filter(Request $request)
+{
+    $dress = $request->query('dress', 'barong');
+
+    // Way 1: arrow form
+    $arrowQuery = Event::with('venue')
+        ->where('details->dress_code', $dress)
+        ->orderBy('id')
+        ->limit(50);
+
+    // Way 2: containment
+    $containQuery = Event::with('venue')
+        ->whereJsonContains('details', ['dress_code' => $dress])
+        ->orderBy('id')
+        ->limit(50);
+
+    return view('events.filter', [
+        'dress'         => $dress,
+        'arrowSql'      => $arrowQuery->toSql(),
+        'arrowBindings' => $arrowQuery->getBindings(),
+        'arrowEvents'   => $arrowQuery->get(),
+        'containSql'      => $containQuery->toSql(),
+        'containBindings' => $containQuery->getBindings(),
+        'containEvents'   => $containQuery->get(),
+    ]);
+}
 }

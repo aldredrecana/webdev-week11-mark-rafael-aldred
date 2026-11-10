@@ -12,6 +12,11 @@ class Event extends Model
 {
 protected $fillable = ['venue_id', 'title', 'event_date', 'description', 'details', 'starts_at'];
 
+protected $casts = [
+    'details'   => 'array',
+    'starts_at' => 'datetime',
+];
+
   
     // An event belongs to one venue
     public function venue(): BelongsTo
