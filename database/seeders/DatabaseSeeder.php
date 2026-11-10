@@ -61,5 +61,7 @@ class DatabaseSeeder extends Seeder
         $gym->notes()->create(['body' => 'Gym closes at 9 PM.']);
         $hall->notes()->create(['body' => 'Aircon needs checking.']);
         $court->notes()->create(['body' => 'Court is open to all students.']);
+
+        $this->call(LargeDatasetSeeder::class);
     }
 }
